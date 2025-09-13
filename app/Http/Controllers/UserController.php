@@ -3,40 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Http\Requests\UserRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
     /**
-     * Validate user data.
-     */
-    protected function validateUser(Request $request, bool $isNewUser = true): array
-    {
-        $rules = [
-            'name' => 'required|min:3|max:70',
-            'email' => 'required|email' . ($isNewUser ? '|unique:users' : ''),
-            'password' => 'required|min:6'
-        ];
-
-        return $request->validate($rules);
-    }
-
-    /**
-     * Handles the response for invalid user data during validation.
-     */
-    protected function handleInvalidUser(ValidationException $e): JsonResponse
-    {
-        return response()->json([
-            'success' => false,
-            'message' => $e->getMessage(),
-            'errors'  => $e->validator->errors() 
-        ], 422);
-    }
-
-    /**
      * Display a listing of the resource.
+     * 
+     * @return JsonResponse
      */
     public function index(): JsonResponse
     {
@@ -48,16 +23,13 @@ class UserController extends Controller
 
     /**
      * Store a newly created resource in storage.
+     * 
+     * @param UserRequest $request
+     * @return JsonResponse
      */
-    public function store(Request $request): JsonResponse
+    public function store(UserRequest $request): JsonResponse
     {
-        try {
-            $data = $this->validateUser($request);
-        } catch (ValidationException $e) {
-            return $this->handleInvalidUser($e);
-        }
-
-        User::create($data);
+        User::create($request->validated());
 
         return response()->json([
             'success' => true,
@@ -67,6 +39,9 @@ class UserController extends Controller
 
     /**
      * Display the specified resource.
+     * 
+     * @param User $user
+     * @return JsonResponse
      */
     public function show(User $user): JsonResponse
     {
@@ -78,16 +53,14 @@ class UserController extends Controller
 
     /**
      * Update the specified resource in storage.
+     * 
+     * @param UserRequest $request
+     * @param User $user
+     * @return JsonResponse
      */
-    public function update(Request $request, User $user): JsonResponse
+    public function update(UserRequest $request, User $user): JsonResponse
     {
-        try {
-            $data = $this->validateUser($request, false);
-        } catch (ValidationException $e) {
-            return $this->handleInvalidUser($e);
-        }
-
-        $user->update($data);
+        $user->update($request->validated());
 
         return response()->json([
             'success' => true,
@@ -97,6 +70,9 @@ class UserController extends Controller
 
     /**
      * Remove the specified resource from storage.
+     * 
+     * @param User $user
+     * @return JsonResponse
      */
     public function destroy(User $user): JsonResponse
     {
